@@ -1,6 +1,6 @@
 port = 8080
+#database_url = "mysql://u1941_OTvnM0CzHO:Ky4L6t5upY@kU.t!VhEa6f8m@cz1.helkor.eu:3306/s1941_jazykRust"
 database_url = "mysql://user:pass@host:3306/dbname"
-
 [cors]
 enabled = true
 allowed_origins = ["http://localhost:3000"]

@@ -24,20 +24,18 @@ impl ServerRun {
             .max_connections(5)
             .connect(&settings.database_url)
             .await
-            .map_err(|e| logger!(LogLevel::Error, "Failed to connect to DB: {}", e));
+            .map_err(|e| error_shut_down(&*e.to_string()));
 
 
         let port = settings.port;
         let app_settings = settings.clone();
 
         logger!(LogLevel::Info, "Server starting on 127.0.0.1:{}", port);
-
         HttpServer::new(move || {
 
             let worker_settings = app_settings.clone();
             let cors_config = worker_settings.cors.unwrap_or_default();
             let is_enabled = cors_config.enabled;
-
             App::new()
                 .app_data(web::Data::new(pool.clone()))
 
@@ -50,6 +48,7 @@ impl ServerRun {
             .bind(("127.0.0.1", port))?
             .run()
             .await?;
+
 
         Ok(())
     }
@@ -100,3 +99,12 @@ pub fn configure_cors(settings: &CorsSettings) -> Cors {
     cors
 }
 
+pub fn shut_down_sever() {
+    logger!(LogLevel::Info, "Shutting down server...");
+    std::process::exit(0);
+}
+
+pub fn error_shut_down(msg: &str) {
+    logger!(LogLevel::Error, "Fatal error: {}", msg);
+    std::process::exit(1);
+}

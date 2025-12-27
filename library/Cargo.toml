@@ -3,4 +3,20 @@ name = "library"
 version = "0.1.0"
 edition = "2024"
 
+[lib]
+proc-macro = false
+
 [dependencies]
+proc-macro2 = "1.0.103"
+quote = "1.0.42"
+syn = "2.0.111"
+sqlx = { version = "0.7", features = ["mysql", "runtime-tokio"] }
+anyhow = "1.0"
+inventory = "0.3"
+serde = { version = "1.0.228", features = ["derive"] }
+config = "0.15.19"
+actix-web = "4.12.1"
+actix-cors = "0.7.1"
+dotenvy = "0.15"
+chrono = "0.4.42"
+log = "0.4.29"

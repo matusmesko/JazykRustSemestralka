@@ -1,0 +1,7 @@
+[workspace]
+members = [
+    "binarz",
+    "library"
+, "macros"]
+
+resolver = "3"

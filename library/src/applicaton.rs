@@ -1,31 +1,35 @@
+use std::sync::Once;
 use actix_cors::Cors;
 use actix_web::{web, App, HttpServer, middleware::Condition};
 use actix_web::http::{header, Method};
-use log::logger;
 use sqlx::mysql::MySqlPoolOptions;
 use sqlx::MySqlPool;
 
 use crate::config::{CorsSettings, Settings};
 use crate::logger;
-use crate::Logger::LogLevel;
+use crate::logger::LogLevel;
+use crate::entity_registry;
 
 pub struct ServerRun;
-
+static CORS_LOG_ONCE: Once = Once::new();
 impl ServerRun {
     pub async fn start() -> anyhow::Result<()> {
 
         let settings = Settings::load().map_err(|e| {
             let msg = format!("Failed to load config: {}", e);
-            logger!(LogLevel::Error, "{}", msg);
             anyhow::anyhow!(msg)
         })?;
 
-        let pool = MySqlPoolOptions::new()
+        let pool: MySqlPool = MySqlPoolOptions::new()
             .max_connections(5)
             .connect(&settings.database_url)
             .await
-            .map_err(|e| error_shut_down(&*e.to_string()));
+            .map_err(|e| {
+                let msg = format!("Failed to connect to DB: {}", e);
+                anyhow::anyhow!(msg)
+            })?;
 
+        entity_registry::run_all(&pool).await.map_err(|e| anyhow::anyhow!(e));
 
         let port = settings.port;
         let app_settings = settings.clone();
@@ -39,15 +43,14 @@ impl ServerRun {
             App::new()
                 .app_data(web::Data::new(pool.clone()))
 
-                .wrap(Condition::new(
-                    is_enabled,
-                    configure_cors(&cors_config)
-                ))
+                .wrap(Condition::new(is_enabled, configure_cors(&cors_config)))
                 .route("/health", web::get().to(|| async { "OK" }))
+                .configure(|cfg| crate::controller_registry::configure_all(cfg))
         })
             .bind(("127.0.0.1", port))?
             .run()
             .await?;
+        logger!(LogLevel::Info, "Server is running!");
 
 
         Ok(())
@@ -60,6 +63,9 @@ pub fn configure_cors(settings: &CorsSettings) -> Cors {
     let mut cors = Cors::default();
 
     if !settings.enabled {
+        CORS_LOG_ONCE.call_once(|| {
+            logger!(LogLevel::Warn, "Disabling CORS - this is not recommended for production environments!");
+        });
         return cors;
     }
 
@@ -95,16 +101,8 @@ pub fn configure_cors(settings: &CorsSettings) -> Cors {
     if let Some(max_age) = settings.max_age {
         cors = cors.max_age(max_age as usize);
     }
-
+    CORS_LOG_ONCE.call_once(|| {
+        logger!(LogLevel::Info, "CORS is enabled and running!");
+    });
     cors
-}
-
-pub fn shut_down_sever() {
-    logger!(LogLevel::Info, "Shutting down server...");
-    std::process::exit(0);
-}
-
-pub fn error_shut_down(msg: &str) {
-    logger!(LogLevel::Error, "Fatal error: {}", msg);
-    std::process::exit(1);
 }

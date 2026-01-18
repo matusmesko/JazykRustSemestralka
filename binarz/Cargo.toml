@@ -7,3 +7,10 @@ edition = "2024"
 actix-web = "4.12.1"
 library = { path = "../library" }
 tokio = { version = "1.48.0", features = ["rt", "rt-multi-thread", "macros"] }
+macros = { path = "../macros" }
+sqlx = { version = "0.8.6", features = ["mysql", "runtime-tokio"] }
+anyhow = "1.0.100"
+serde = { version = "1.0.228", features = ["derive"] }
+bcrypt = "0.17.1"
+uuid = { version = "1.4.4", features = ["v4"] }
+inventory = "0.3.21"

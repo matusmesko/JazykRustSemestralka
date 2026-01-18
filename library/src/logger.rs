@@ -1,4 +1,3 @@
-use chrono::Local;
 
 #[macro_export]
 macro_rules! logger {
@@ -16,10 +15,6 @@ macro_rules! logger {
     }};
 }
 
-#[allow(dead_code)]
-pub fn _init() {
-    let _ = Local::now();
-}
 
 
 #[derive(Debug, Clone, Copy)]

@@ -1,6 +1,7 @@
 use config::{Config, ConfigError, File};
 use serde::Deserialize;
-
+use crate::logger;
+use crate::logger::LogLevel;
 
 #[derive(Debug, Deserialize, Default, Clone)]
 pub struct CorsSettings {
@@ -21,6 +22,7 @@ pub struct Settings {
 
 impl Settings {
     pub fn load() -> Result<Self, ConfigError> {
+        logger!(LogLevel::Info, "Loading configuration from config.toml");
         let config = Config::builder()
             .add_source(File::with_name("config.toml"))
             .build()?;
